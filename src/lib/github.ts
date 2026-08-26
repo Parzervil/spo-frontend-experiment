@@ -248,3 +248,29 @@ export async function saveFileContent(
     throw error;
   }
 }
+
+/**
+ * 删除文件
+ */
+export async function deleteFileContent(
+  token: string,
+  path: string,
+  sha: string,
+  message: string = 'Delete via SPO Co-Creation Platform'
+) {
+  checkConfig();
+  const octokit = new Octokit({ auth: token });
+
+  try {
+    await octokit.rest.repos.deleteFile({
+      owner,
+      repo,
+      path,
+      message,
+      sha,
+    });
+  } catch (error) {
+    console.error('Failed to delete file:', error);
+    throw error;
+  }
+}

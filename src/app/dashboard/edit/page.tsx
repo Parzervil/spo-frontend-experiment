@@ -20,13 +20,19 @@ function EditContent() {
   const [saving, setSaving] = useState(false);
   const [draftContent, setDraftContent] = useState('');
   const [draftMetadata, setDraftMetadata] = useState<any>({});
+  
+  // 用于重命名的状态
+  const [currentPath, setCurrentPath] = useState(path || '');
+  const [editPath, setEditPath] = useState(path || '');
+  const [isEditingPath, setIsEditingPath] = useState(false);
+  const [showMetadata, setShowMetadata] = useState(true);
 
   // 简单的基于文件夹的权限控制
   const canEdit = useMemo(() => {
-    if (!path || !user) return false;
+    if (!currentPath || !user) return false;
     
     // 提取真正的归属文件夹名称
-    const parts = path.split('/');
+    const parts = currentPath.split('/');
     let folderName = parts[0];
     
     // 如果路径是 knowledge_base/文件夹/文件.md，我们要判断的拥有者其实是第二个层级
@@ -38,7 +44,7 @@ function EditContent() {
     }
     
     // 如果没有放在任何文件夹里，或者是自己的文件夹
-    if (!path.includes('/') || folderName === user.login) {
+    if (!currentPath.includes('/') || folderName === user.login) {
       return true;
     }
     
@@ -50,7 +56,7 @@ function EditContent() {
     
     // 其他情况视为“他人的私人文件夹”
     return false;
-  }, [path, user]);
+  }, [currentPath, user]);
 
   useEffect(() => {
     if (!token || !path) return;
@@ -83,12 +89,30 @@ function EditContent() {
   }, [token, path, isImport]);
 
   const handleSave = async () => {
-    if (!token || !path || !canEdit) return;
+    if (!token || !currentPath || !canEdit || saving) return;
     setSaving(true);
     try {
       const rawFile = matter.stringify(draftContent, draftMetadata);
-      const res = await saveFileContent(token, path, rawFile, sha);
-      setSha(res.content?.sha || '');
+      
+      let finalPath = currentPath;
+      if (editPath !== currentPath && editPath.trim().endsWith('.md')) {
+        finalPath = editPath.trim();
+        // 如果重命名了，保存新文件并删除旧文件
+        const res = await saveFileContent(token, finalPath, rawFile, '');
+        if (sha) {
+          const { deleteFileContent } = await import('@/lib/github');
+          await deleteFileContent(token, currentPath, sha);
+        }
+        setSha(res.content?.sha || '');
+        setCurrentPath(finalPath);
+        router.replace(`/dashboard/edit?path=${encodeURIComponent(finalPath)}`);
+      } else {
+        // 直接更新当前文件
+        const res = await saveFileContent(token, currentPath, rawFile, sha);
+        setSha(res.content?.sha || '');
+      }
+      
+      setIsEditingPath(false);
       toast.success('保存成功');
     } catch (error: any) {
       toast.error(error.message || '保存失败');
@@ -96,6 +120,18 @@ function EditContent() {
       setSaving(false);
     }
   };
+
+  // 监听 Ctrl+S 或 Cmd+S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave]);
 
   if (!path) return <div>缺少 path 参数</div>;
   if (loading) return (
@@ -124,11 +160,39 @@ function EditContent() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-black">
-      <header className="flex justify-between items-center p-4 border-b">
-        <div>
-          <span className="text-gray-500">正在查看:</span> 
-          <span className="ml-2 font-bold">{path}</span>
+    <div className="flex flex-col h-full">
+      <header className="flex justify-between items-center p-4 border-b bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-gray-800">
+        <div className="flex items-center">
+          <span className="text-gray-500 mr-2">正在查看:</span> 
+          {isEditingPath && canEdit ? (
+            <input
+              autoFocus
+              value={editPath}
+              onChange={(e) => setEditPath(e.target.value)}
+              onBlur={() => {
+                if (editPath === currentPath || !editPath.trim().endsWith('.md')) {
+                  setEditPath(currentPath);
+                  setIsEditingPath(false);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') {
+                  setEditPath(currentPath);
+                  setIsEditingPath(false);
+                }
+              }}
+              className="font-mono text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 border-none rounded min-w-[300px] outline-none ring-2 ring-blue-500"
+            />
+          ) : (
+            <span 
+              className={`font-mono text-sm font-bold ${canEdit ? 'cursor-pointer hover:text-blue-500 hover:underline' : ''}`}
+              onClick={() => canEdit && setIsEditingPath(true)}
+              title={canEdit ? '点击重命名文件路径' : ''}
+            >
+              {currentPath}
+            </span>
+          )}
           {!canEdit && (
             <span className="ml-3 px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
               只读模式 (他人的文件夹)
@@ -136,14 +200,24 @@ function EditContent() {
           )}
         </div>
         <div className="flex gap-4">
-          <button onClick={() => router.back()} className="text-sm">返回</button>
+          <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-black dark:hover:text-white">返回</button>
+          
+          <button 
+            onClick={() => setShowMetadata(!showMetadata)} 
+            className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${showMetadata ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            title="显示/隐藏侧边属性面板"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="15" x2="15" y1="3" y2="21"/></svg>
+          </button>
+          
           {canEdit && (
             <button 
               onClick={handleSave} 
               disabled={saving}
-              className="bg-black dark:bg-white text-white dark:text-black px-4 py-1 rounded-md text-sm"
+              className="bg-black dark:bg-white text-white dark:text-black px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center gap-2"
             >
-              {saving ? '保存中...' : '保存更改'}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={saving ? 'animate-spin' : ''}><path d={saving ? "M21 12a9 9 0 1 1-6.219-8.56" : "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"}/><polyline points={saving ? "" : "17 21 17 13 7 13 7 21"}/><polyline points={saving ? "" : "7 3 7 8 15 8"}/></svg>
+              {saving ? '保存中...' : '保存更改 (Ctrl+S)'}
             </button>
           )}
         </div>
@@ -155,6 +229,7 @@ function EditContent() {
       <main className={`flex-1 overflow-hidden ${!canEdit ? 'opacity-80 pointer-events-none' : ''}`}>
         <Editor 
           initialContent={content} 
+          showMetadata={showMetadata}
           onUpdate={(md, meta) => {
             if (canEdit) {
               setDraftContent(md);
