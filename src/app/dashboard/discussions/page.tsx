@@ -74,7 +74,7 @@ export default function DiscussionsPage() {
   return (
     <div className="p-8 max-w-5xl mx-auto font-[family-name:var(--font-geist-sans)]">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">协作中心 (Discussions)</h1>
+        <h1 className="text-2xl font-bold">协作中心</h1>
         <button 
           onClick={() => setIsCreating(!isCreating)}
           className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-medium"
@@ -93,11 +93,20 @@ export default function DiscussionsPage() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full p-2 border rounded bg-white dark:bg-black"
             >
-              {repoInfo?.discussionCategories.nodes.map((cat: any) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.emoji} {cat.name}
-                </option>
-              ))}
+              {repoInfo?.discussionCategories.nodes.map((cat: any) => {
+                const categoryMap: Record<string, string> = {
+                  'General': '综合讨论',
+                  'Ideas': '想法与创意',
+                  'Q&A': '问答',
+                  'Show and tell': '分享展示',
+                  'Announcements': '公告'
+                };
+                return (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.emoji} {categoryMap[cat.name] || cat.name}
+                  </option>
+                );
+              })}
             </select>
           </div>
           <div className="mb-4">
@@ -170,7 +179,13 @@ export default function DiscussionsPage() {
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                      {d.category.name}
+                      {{
+                        'General': '综合讨论',
+                        'Ideas': '想法与创意',
+                        'Q&A': '问答',
+                        'Show and tell': '分享展示',
+                        'Announcements': '公告'
+                      }[d.category.name as string] || d.category.name}
                     </span>
                     <h3 className="font-bold text-lg">{d.title}</h3>
                   </div>
