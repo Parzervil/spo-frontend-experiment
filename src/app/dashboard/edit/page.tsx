@@ -182,11 +182,11 @@ function EditContent() {
                   setIsEditingPath(false);
                 }
               }}
-              className="font-mono text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 border-none rounded min-w-[300px] outline-none ring-2 ring-blue-500"
+              className="font-mono text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 border-none rounded min-w-[300px] outline-none ring-2 ring-accent"
             />
           ) : (
             <span 
-              className={`font-mono text-sm font-bold ${canEdit ? 'cursor-pointer hover:text-blue-500 hover:underline' : ''}`}
+              className={`font-mono text-sm font-bold ${canEdit ? 'cursor-pointer hover:text-accent hover:underline' : ''}`}
               onClick={() => canEdit && setIsEditingPath(true)}
               title={canEdit ? '点击重命名文件路径' : ''}
             >
@@ -204,7 +204,7 @@ function EditContent() {
           
           <button 
             onClick={() => setShowMetadata(!showMetadata)} 
-            className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${showMetadata ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${showMetadata ? 'bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-[#222]'}`}
             title="显示/隐藏侧边属性面板"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="15" x2="15" y1="3" y2="21"/></svg>
@@ -214,7 +214,7 @@ function EditContent() {
             <button 
               onClick={handleSave} 
               disabled={saving}
-              className="bg-black dark:bg-white text-white dark:text-black px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center gap-2"
+              className="bg-accent text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={saving ? 'animate-spin' : ''}><path d={saving ? "M21 12a9 9 0 1 1-6.219-8.56" : "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"}/><polyline points={saving ? "" : "17 21 17 13 7 13 7 21"}/><polyline points={saving ? "" : "7 3 7 8 15 8"}/></svg>
               {saving ? '保存中...' : '保存更改 (Ctrl+S)'}

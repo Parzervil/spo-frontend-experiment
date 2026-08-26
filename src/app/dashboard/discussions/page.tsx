@@ -77,7 +77,7 @@ export default function DiscussionsPage() {
         <h1 className="text-2xl font-bold">协作中心</h1>
         <button 
           onClick={() => setIsCreating(!isCreating)}
-          className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-medium"
+          className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
         >
           {isCreating ? '取消发布' : '发起新讨论'}
         </button>
@@ -131,7 +131,7 @@ export default function DiscussionsPage() {
             <button 
               type="submit" 
               disabled={submitting}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+              className="bg-accent text-white px-6 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {submitting ? '发布中...' : '提交讨论'}
             </button>

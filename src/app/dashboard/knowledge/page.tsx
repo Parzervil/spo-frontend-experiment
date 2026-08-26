@@ -91,7 +91,7 @@ export default function KnowledgeBase() {
       className={`block bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-lg transition-all cursor-pointer group ${viewMode === 'list' ? 'p-4 flex items-center justify-between' : 'p-6'}`}
     >
       <div className={`flex items-center ${viewMode === 'list' ? 'gap-4' : 'gap-3 mb-2'}`}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 group-hover:fill-blue-500/20 transition-colors"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent group-hover:fill-blue-500/20 transition-colors"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
         <h3 className="font-bold truncate text-lg">{folder}</h3>
       </div>
       <p className="text-sm text-gray-500">{fileTree.filter(f => (f as any).displayPath.startsWith(`${folder}/`)).length} 篇文档</p>
@@ -154,7 +154,7 @@ export default function KnowledgeBase() {
           </button>
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-medium"
+            className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
           >
             新建
           </button>
@@ -171,7 +171,7 @@ export default function KnowledgeBase() {
       {!loading && !error && folders.length === 0 && fileTree.length === 0 && (
         <div className="text-center py-20 bg-gray-50 dark:bg-gray-900 rounded-xl border border-dashed border-gray-300">
           <p className="text-gray-500 mb-4">当前知识库没有任何文件夹</p>
-          <button onClick={() => setShowCreateModal(true)} className="text-blue-500 hover:underline">点击新建第一篇文档</button>
+          <button onClick={() => setShowCreateModal(true)} className="text-accent hover:underline">点击新建第一篇文档</button>
         </div>
       )}
 
@@ -183,7 +183,7 @@ export default function KnowledgeBase() {
               const filesInFolder = fileTree.filter(f => (f as any).displayPath.startsWith(`${folder}/`));
               return (
                 <li key={folder}>
-                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold mb-2 cursor-default">
+                  <div className="flex items-center gap-2 text-accent dark:text-blue-400 font-bold mb-2 cursor-default">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
                     {folder}/
                   </div>
@@ -191,7 +191,7 @@ export default function KnowledgeBase() {
                     <ul className="pl-6 space-y-2 border-l-2 border-gray-100 dark:border-gray-800 ml-2">
                       {filesInFolder.map(file => (
                         <li key={file.path}>
-                          <Link href={`/dashboard/edit?path=${encodeURIComponent(file.path)}`} className="flex items-center gap-2 hover:text-blue-500 hover:underline text-gray-700 dark:text-gray-300">
+                          <Link href={`/dashboard/edit?path=${encodeURIComponent(file.path)}`} className="flex items-center gap-2 hover:text-accent hover:underline text-gray-700 dark:text-gray-300">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
                             {(file as any).name}
                             <span className="text-gray-400 text-xs ml-2">({(file.size / 1024).toFixed(1)} KB)</span>
@@ -208,7 +208,7 @@ export default function KnowledgeBase() {
             {/* 根目录的独立文件 */}
             {fileTree.filter(f => !(f as any).displayPath.includes('/')).map(file => (
               <li key={file.path} className="mt-4">
-                <Link href={`/dashboard/edit?path=${encodeURIComponent(file.path)}`} className="flex items-center gap-2 hover:text-blue-500 hover:underline text-gray-700 dark:text-gray-300 font-bold">
+                <Link href={`/dashboard/edit?path=${encodeURIComponent(file.path)}`} className="flex items-center gap-2 hover:text-accent hover:underline text-gray-700 dark:text-gray-300 font-bold">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
                   {(file as any).name}
                 </Link>
@@ -247,7 +247,7 @@ export default function KnowledgeBase() {
               <select 
                 value={folderName}
                 onChange={(e) => setFolderName(e.target.value)}
-                className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-accent"
               >
                 <option value={user?.login}>个人目录: {user?.login}</option>
                 <option value="设计（Public）">设计（Public）</option>
@@ -261,7 +261,7 @@ export default function KnowledgeBase() {
                 <input 
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
-                  className="flex-1 p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex-1 p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-accent"
                   placeholder="例如: star_city"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
@@ -279,7 +279,7 @@ export default function KnowledgeBase() {
               </button>
               <button 
                 onClick={handleCreate}
-                className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-medium"
+                className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 前往编辑
               </button>

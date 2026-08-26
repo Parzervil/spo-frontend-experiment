@@ -175,7 +175,7 @@ export default function Editor({ initialContent, onUpdate, showMetadata = true }
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{key}</label>
                 <div className="flex gap-2">
                   <input 
-                    className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-lg text-sm bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow" 
+                    className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-lg text-sm bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-accent transition-shadow" 
                     value={metadata[key]} 
                     onChange={(e) => handleUpdateProperty(key, e.target.value)}
                     placeholder={`输入 ${key}...`}

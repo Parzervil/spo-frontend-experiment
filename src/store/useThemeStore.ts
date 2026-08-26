@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ThemeType = 'default' | 'peach' | 'mint' | 'blue' | 'lavender';
+export type ThemeType = 'light' | 'dark' | 'system';
 
 interface ThemeState {
   theme: ThemeType;
@@ -11,11 +11,11 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      theme: 'default',
+      theme: 'system',
       setTheme: (theme) => set({ theme }),
     }),
     {
-      name: 'spo-theme-storage',
+      name: 'spo-theme-mode',
     }
   )
 );

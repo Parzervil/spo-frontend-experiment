@@ -12,31 +12,18 @@ export default function ThemeSwitcher() {
 
   if (!mounted) return null;
 
-  const themes: { id: ThemeType; color: string; label: string }[] = [
-    { id: 'default', color: 'bg-gray-200', label: '默认' },
-    { id: 'peach', color: 'bg-[#fff5f0]', label: '晚霞' },
-    { id: 'mint', color: 'bg-[#f0fff4]', label: '薄荷' },
-    { id: 'blue', color: 'bg-[#f0f7ff]', label: '海风' },
-    { id: 'lavender', color: 'bg-[#faf0ff]', label: '薰衣草' },
-  ];
-
   return (
     <div className="px-4 py-2 mt-4 mb-2">
-      <p className="text-xs text-gray-500 mb-2 font-medium">应用主题</p>
-      <div className="flex gap-2">
-        {themes.map((t) => (
-          <button
-            key={t.id}
-            title={t.label}
-            onClick={() => setTheme(t.id)}
-            className={`w-6 h-6 rounded-full border-2 transition-all ${t.color} ${
-              theme === t.id 
-                ? 'border-blue-500 scale-110 shadow-sm' 
-                : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-            }`}
-          />
-        ))}
-      </div>
+      <p className="text-xs text-gray-500 mb-2 font-medium">界面主题</p>
+      <select
+        value={theme}
+        onChange={(e) => setTheme(e.target.value as ThemeType)}
+        className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-sm rounded-lg p-2 outline-none focus:border-accent"
+      >
+        <option value="system">跟随系统</option>
+        <option value="light">Default Light</option>
+        <option value="dark">Default Dark</option>
+      </select>
     </div>
   );
 }
