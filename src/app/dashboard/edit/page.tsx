@@ -3,12 +3,12 @@ import Editor from '@/components/Editor';
 import { fetchFileContent, saveFileContent } from '@/lib/github';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useMemo } from 'react';
 import matter from 'gray-matter';
 import { toast } from 'sonner';
 
 function EditContent() {
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const searchParams = useSearchParams();
   const router = useRouter();
   const path = searchParams.get('path');
@@ -21,6 +21,26 @@ function EditContent() {
   const [draftContent, setDraftContent] = useState('');
   const [draftMetadata, setDraftMetadata] = useState<any>({});
 
+  // 简单的基于文件夹的权限控制
+  const canEdit = useMemo(() => {
+    if (!path || !user) return false;
+    const folderName = path.split('/')[0];
+    
+    // 如果没有放在任何文件夹里，或者是自己的文件夹
+    if (!path.includes('/') || folderName === user.login) {
+      return true;
+    }
+    
+    // 预设的公共文件夹允许所有人编辑
+    const publicFolders = ['knowledge_base', 'docs', 'wiki', 'public', 'materials'];
+    if (publicFolders.includes(folderName)) {
+      return true;
+    }
+    
+    // 其他情况视为“他人的私人文件夹”
+    return false;
+  }, [path, user]);
+
   useEffect(() => {
     if (!token || !path) return;
     
@@ -30,7 +50,6 @@ function EditContent() {
           const importedContent = sessionStorage.getItem('draft_import') || '';
           setContent(importedContent);
           setSha(''); // 新文件没有 sha
-          // sessionStorage.removeItem('draft_import'); 移除这行，避免 React Strict Mode 下第二次执行将其清空
         } else {
           const file = await fetchFileContent(token, path);
           setContent(file.content);
@@ -38,7 +57,6 @@ function EditContent() {
         }
       } catch (error: any) {
         console.error(error);
-        // 如果是 404 找不到文件，说明是新建的普通文件
         if (error.status === 404) {
           setContent('');
           setSha('');
@@ -54,10 +72,9 @@ function EditContent() {
   }, [token, path, isImport]);
 
   const handleSave = async () => {
-    if (!token || !path) return;
+    if (!token || !path || !canEdit) return;
     setSaving(true);
     try {
-      // 重新拼装 frontmatter
       const rawFile = matter.stringify(draftContent, draftMetadata);
       const res = await saveFileContent(token, path, rawFile, sha);
       setSha(res.content?.sha || '');
@@ -99,26 +116,39 @@ function EditContent() {
     <div className="flex flex-col h-full bg-white dark:bg-black">
       <header className="flex justify-between items-center p-4 border-b">
         <div>
-          <span className="text-gray-500">正在编辑:</span> 
+          <span className="text-gray-500">正在查看:</span> 
           <span className="ml-2 font-bold">{path}</span>
+          {!canEdit && (
+            <span className="ml-3 px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+              只读模式 (他人的文件夹)
+            </span>
+          )}
         </div>
         <div className="flex gap-4">
           <button onClick={() => router.back()} className="text-sm">返回</button>
-          <button 
-            onClick={handleSave} 
-            disabled={saving}
-            className="bg-black dark:bg-white text-white dark:text-black px-4 py-1 rounded-md text-sm"
-          >
-            {saving ? '保存中...' : '保存更改'}
-          </button>
+          {canEdit && (
+            <button 
+              onClick={handleSave} 
+              disabled={saving}
+              className="bg-black dark:bg-white text-white dark:text-black px-4 py-1 rounded-md text-sm"
+            >
+              {saving ? '保存中...' : '保存更改'}
+            </button>
+          )}
         </div>
       </header>
-      <main className="flex-1 overflow-hidden">
+      
+      {/* 如果没有权限，可以加一个遮罩或者仅仅是让组件内部知道，但目前组件内部没有接收 disabled，
+          我们可以简单地用 pointer-events-none 禁用交互，或者让 Editor 组件接收 readonly prop。
+          由于 Editor 组件暂时没有 readonly 属性，我们在外层包一个 div 拦截点击 */}
+      <main className={`flex-1 overflow-hidden ${!canEdit ? 'opacity-80 pointer-events-none' : ''}`}>
         <Editor 
           initialContent={content} 
           onUpdate={(md, meta) => {
-            setDraftContent(md);
-            setDraftMetadata(meta);
+            if (canEdit) {
+              setDraftContent(md);
+              setDraftMetadata(meta);
+            }
           }} 
         />
       </main>

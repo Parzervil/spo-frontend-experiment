@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 
 import { Markdown } from 'tiptap-markdown';
 
+import { useAuthStore } from '@/store/useAuthStore';
+
 interface EditorProps {
   initialContent: string;
   onUpdate: (content: string, metadata: any) => void;
@@ -14,6 +16,7 @@ interface EditorProps {
 export default function Editor({ initialContent, onUpdate }: EditorProps) {
   const [metadata, setMetadata] = useState<any>({});
   const [newKey, setNewKey] = useState('');
+  const { user } = useAuthStore();
   
   // Parse frontmatter
   const editor = useEditor({
@@ -45,7 +48,14 @@ export default function Editor({ initialContent, onUpdate }: EditorProps) {
           // 如果是新文件，提供默认的属性结构
           const defaultMeta = parsed.data && Object.keys(parsed.data).length > 0 
             ? parsed.data 
-            : { title: '', type: 'worldview', summary: '' };
+            : { 
+                '标题': '', 
+                '类型': '世界观', 
+                '摘要': '',
+                '作者': user?.name || user?.login || '',
+                '状态': '草稿',
+                '标签': ''
+              };
             
           setMetadata(defaultMeta);
           editor.commands.setContent(parsed.content);
