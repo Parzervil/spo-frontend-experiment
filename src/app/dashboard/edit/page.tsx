@@ -33,7 +33,7 @@ function EditContent() {
     
     // 预设的公共文件夹允许所有人编辑
     const publicFolders = ['knowledge_base', 'docs', 'wiki', 'public', 'materials'];
-    if (publicFolders.includes(folderName)) {
+    if (publicFolders.includes(folderName) || folderName.toLowerCase().includes('public')) {
       return true;
     }
     
