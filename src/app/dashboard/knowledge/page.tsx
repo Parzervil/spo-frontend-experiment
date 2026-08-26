@@ -56,8 +56,12 @@ export default function KnowledgeBase() {
   };
 
   // 文件夹分组逻辑
-  // 提取所有顶层文件夹，或者如果有嵌套也按顶层算
-  const folders = Array.from(new Set(fileTree.map(f => f.path.split('/')[0]).filter(name => !name.endsWith('.md'))));
+  // 提取所有顶层文件夹，并强制放入预设的公共空文件夹
+  const defaultFolders = ['设计（Public）', 'IDEAS（Public）'];
+  const folders = Array.from(new Set([
+    ...defaultFolders, 
+    ...fileTree.map(f => f.path.split('/')[0]).filter(name => !name.endsWith('.md'))
+  ]));
   
   // 当前显示的文件
   const displayFiles = currentFolder 
