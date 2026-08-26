@@ -113,7 +113,7 @@ function EditContent() {
           </button>
         </div>
       </header>
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-hidden">
         <Editor 
           initialContent={content} 
           onUpdate={(md, meta) => {
