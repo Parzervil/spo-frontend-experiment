@@ -170,7 +170,7 @@ export default function DiscussionsPage() {
                     <span>{d.comments.totalCount} 回复</span>
                   </div>
                 </div>
-              </a>
+              </Link>
             ))
           )}
         </div>
