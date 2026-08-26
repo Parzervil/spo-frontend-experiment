@@ -23,49 +23,57 @@ export default function KnowledgeBase() {
     }
   }, [user, folderName]);
 
-  useEffect(() => {
+  const loadTree = async () => {
     if (!token) return;
+    setLoading(true);
+    try {
+      const tree = await fetchFileTree(token); 
+      // 过滤出 knowledge_base 下的 markdown 文件
+      const filesOnly = (Array.isArray(tree) ? tree : [])
+        .filter(item => item.type === 'blob' && item.path.startsWith('knowledge_base/') && item.path.endsWith('.md'))
+        .map(item => ({
+          ...item,
+          name: item.path.split('/').pop() || '',
+          // 为了展示方便，我们将 path 去掉 knowledge_base/ 前缀
+          displayPath: item.path.replace(/^knowledge_base\//, ''),
+          size: item.size || 0
+        }));
+      setFileTree(filesOnly as any);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const loadTree = async () => {
-      setLoading(true);
-      try {
-        const tree = await fetchFileTree(token, ''); 
-        const filesOnly = (Array.isArray(tree) ? tree : []).filter(item => item.name.endsWith('.md'));
-        setFileTree(filesOnly as any);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (fileTree.length === 0) {
+  useEffect(() => {
+    if (token && fileTree.length === 0) {
       loadTree();
     }
-  }, [token, fileTree.length, setFileTree, setLoading, setError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const handleCreate = () => {
     if (!fileName.trim()) {
       toast.warning('请输入文件名');
       return;
     }
-    const safeFolder = folderName.trim() || 'knowledge_base';
+    const safeFolder = folderName.trim() || user?.login || 'default';
     const safeFile = fileName.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-    const path = `${safeFolder}/${safeFile}.md`;
+    const path = `knowledge_base/${safeFolder}/${safeFile}.md`;
     router.push(`/dashboard/edit?path=${encodeURIComponent(path)}`);
   };
 
   // 文件夹分组逻辑
-  // 提取所有顶层文件夹，并强制放入预设的公共空文件夹
   const defaultFolders = ['设计（Public）', 'IDEAS（Public）'];
   const folders = Array.from(new Set([
     ...defaultFolders, 
-    ...fileTree.map(f => f.path.split('/')[0]).filter(name => !name.endsWith('.md'))
+    ...fileTree.map(f => (f as any).displayPath.split('/')[0]).filter(name => !name.endsWith('.md'))
   ]));
   
   // 当前显示的文件
   const displayFiles = currentFolder 
-    ? fileTree.filter(f => f.path.startsWith(`${currentFolder}/`))
+    ? fileTree.filter(f => (f as any).displayPath.startsWith(`${currentFolder}/`))
     : [];
 
   return (
@@ -84,12 +92,22 @@ export default function KnowledgeBase() {
             {currentFolder ? `${currentFolder}` : '知识库'}
           </h1>
         </div>
-        <button 
-          onClick={() => setShowCreateModal(true)}
-          className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-medium"
-        >
-          新建
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={loadTree}
+            disabled={loading}
+            className="p-2 text-gray-500 hover:text-black dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            title="刷新数据"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={loading ? 'animate-spin' : ''}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            新建
+          </button>
+        </div>
       </div>
 
       {loading && (
@@ -119,11 +137,11 @@ export default function KnowledgeBase() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 group-hover:fill-blue-500/20 transition-colors"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
                 <h3 className="font-bold truncate text-lg">{folder}</h3>
               </div>
-              <p className="text-sm text-gray-500">{fileTree.filter(f => f.path.startsWith(`${folder}/`)).length} 篇文档</p>
+              <p className="text-sm text-gray-500">{fileTree.filter(f => (f as any).displayPath.startsWith(`${folder}/`)).length} 篇文档</p>
             </div>
           ))}
           {/* 根目录下的 Markdown 文件 */}
-          {fileTree.filter(f => !f.path.includes('/')).map(file => (
+          {fileTree.filter(f => !(f as any).displayPath.includes('/')).map(file => (
             <Link 
               key={file.path} 
               href={`/dashboard/edit?path=${encodeURIComponent(file.path)}`}
@@ -131,7 +149,7 @@ export default function KnowledgeBase() {
             >
               <div className="flex items-center gap-3 mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-                <h3 className="font-bold truncate" title={file.name}>{file.name.replace('.md', '')}</h3>
+                <h3 className="font-bold truncate" title={(file as any).name}>{(file as any).name.replace('.md', '')}</h3>
               </div>
               <p className="text-sm text-gray-500">文件大小: {(file.size / 1024).toFixed(1)} KB</p>
             </Link>
@@ -153,7 +171,7 @@ export default function KnowledgeBase() {
             >
               <div className="flex items-center gap-3 mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-text text-gray-400"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-                <h3 className="font-bold truncate" title={file.name}>{file.name.replace('.md', '')}</h3>
+                <h3 className="font-bold truncate" title={(file as any).name}>{(file as any).name.replace('.md', '')}</h3>
               </div>
               <p className="text-sm text-gray-500">文件大小: {(file.size / 1024).toFixed(1)} KB</p>
               <p className="text-xs text-gray-400 mt-2 truncate">路径: {file.path}</p>

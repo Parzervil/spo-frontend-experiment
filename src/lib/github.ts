@@ -16,17 +16,21 @@ function checkConfig() {
 /**
  * 获取仓库的目录树结构 (递归)
  */
-export async function fetchFileTree(token: string, path: string = '') {
+export async function fetchFileTree(token: string) {
   checkConfig();
   const octokit = new Octokit({ auth: token });
   
   try {
-    const { data } = await octokit.rest.repos.getContent({
+    const { data } = await octokit.rest.git.getTree({
       owner,
       repo,
-      path,
+      tree_sha: 'HEAD',
+      recursive: '1',
     });
-    return data;
+    // data.tree is an array of objects with path, type, size, etc.
+    // map size to make it compatible with old getContent response if needed, 
+    // actually getTree returns size for blobs.
+    return data.tree;
   } catch (error) {
     console.error('Failed to fetch file tree:', error);
     throw error;

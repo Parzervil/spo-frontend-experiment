@@ -24,7 +24,18 @@ function EditContent() {
   // 简单的基于文件夹的权限控制
   const canEdit = useMemo(() => {
     if (!path || !user) return false;
-    const folderName = path.split('/')[0];
+    
+    // 提取真正的归属文件夹名称
+    const parts = path.split('/');
+    let folderName = parts[0];
+    
+    // 如果路径是 knowledge_base/文件夹/文件.md，我们要判断的拥有者其实是第二个层级
+    if (folderName === 'knowledge_base' && parts.length > 2) {
+      folderName = parts[1];
+    } else if (folderName === 'knowledge_base' && parts.length <= 2) {
+      // 根目录下直接建的文件，所有人可编辑
+      return true;
+    }
     
     // 如果没有放在任何文件夹里，或者是自己的文件夹
     if (!path.includes('/') || folderName === user.login) {
