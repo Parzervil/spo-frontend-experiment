@@ -1,5 +1,5 @@
 'use client';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import matter from 'gray-matter';
 import { useEffect, useState } from 'react';
@@ -73,6 +73,58 @@ export default function Editor({ initialContent, onUpdate }: EditorProps) {
       
       {/* 编辑区 */}
       <div className="flex-1 p-8">
+        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+          <div className="bg-white dark:bg-[#2a2a2a] shadow-lg border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex text-sm">
+            <button
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 ${editor.isActive('bold') ? 'bg-gray-100 dark:bg-gray-800 font-bold' : ''}`}
+            >
+              加粗
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 ${editor.isActive('italic') ? 'bg-gray-100 dark:bg-gray-800 font-bold' : ''}`}
+            >
+              斜体
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              className={`px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 ${editor.isActive('strike') ? 'bg-gray-100 dark:bg-gray-800 font-bold' : ''}`}
+            >
+              删除线
+            </button>
+          </div>
+        </BubbleMenu>
+        
+        <FloatingMenu editor={editor} tippyOptions={{ duration: 100 }}>
+          <div className="bg-white dark:bg-[#2a2a2a] shadow-lg border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col text-sm w-32">
+            <button
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              className={`px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${editor.isActive('heading', { level: 1 }) ? 'bg-gray-100 dark:bg-gray-800 font-bold' : ''}`}
+            >
+              标题 1
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={`px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${editor.isActive('heading', { level: 2 }) ? 'bg-gray-100 dark:bg-gray-800 font-bold' : ''}`}
+            >
+              标题 2
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={`px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${editor.isActive('bulletList') ? 'bg-gray-100 dark:bg-gray-800 font-bold' : ''}`}
+            >
+              无序列表
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              className={`px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${editor.isActive('blockquote') ? 'bg-gray-100 dark:bg-gray-800 font-bold' : ''}`}
+            >
+              引用
+            </button>
+          </div>
+        </FloatingMenu>
+        
         <EditorContent editor={editor} />
       </div>
     </div>

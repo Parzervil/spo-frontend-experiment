@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import mammoth from 'mammoth';
+import { toast } from 'sonner';
 
 interface AssetImporterProps {
   onImport: (markdown: string) => void;
@@ -27,7 +28,7 @@ export default function AssetImporter({ onImport }: AssetImporterProps) {
       // Tiptap can accept HTML and will format it properly.
       onImport(result.value);
     } else {
-      alert('仅支持 .txt, .md, .docx 格式');
+      toast.error('仅支持 .txt, .md, .docx 格式');
     }
   };
 

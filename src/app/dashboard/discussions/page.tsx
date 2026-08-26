@@ -3,6 +3,7 @@ import { fetchDiscussions, fetchRepoAndCategories, createDiscussion } from '@/li
 import { useAuthStore } from '@/store/useAuthStore';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function DiscussionsPage() {
   const { token } = useAuthStore();
@@ -34,7 +35,7 @@ export default function DiscussionsPage() {
       }
     } catch (error) {
       console.error(error);
-      alert('加载讨论区失败，请确认是否已在 GitHub 仓库开启 Discussions');
+      toast.error('加载讨论区失败，请确认是否已在 GitHub 仓库开启 Discussions');
     } finally {
       setLoading(false);
     }
@@ -49,7 +50,7 @@ export default function DiscussionsPage() {
     e.preventDefault();
     if (!token || !repoInfo) return;
     if (!newTitle.trim() || !newBody.trim()) {
-      alert('标题和内容不能为空');
+      toast.warning('标题和内容不能为空');
       return;
     }
 
@@ -59,11 +60,12 @@ export default function DiscussionsPage() {
       setIsCreating(false);
       setNewTitle('');
       setNewBody('');
+      toast.success('发布成功');
       // 重新加载列表
       loadData();
     } catch (error) {
       console.error(error);
-      alert('发帖失败');
+      toast.error('发帖失败');
     } finally {
       setSubmitting(false);
     }
@@ -129,7 +131,28 @@ export default function DiscussionsPage() {
       )}
 
       {loading ? (
-        <p className="text-gray-500 text-center py-10">加载中...</p>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl animate-pulse">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-2 w-2/3">
+                  <div className="w-12 h-5 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                  <div className="h-5 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+                </div>
+                <div className="w-8 h-4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+              </div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-4/5 mb-4"></div>
+              <div className="flex justify-between">
+                <div className="flex gap-2">
+                  <div className="w-5 h-5 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+                  <div className="w-20 h-4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                </div>
+                <div className="w-16 h-4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="space-y-4">
           {discussions.length === 0 ? (

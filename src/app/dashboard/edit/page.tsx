@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import matter from 'gray-matter';
+import { toast } from 'sonner';
 
 function EditContent() {
   const { token } = useAuthStore();
@@ -42,7 +43,7 @@ function EditContent() {
           setContent('');
           setSha('');
         } else {
-          alert('加载文件失败');
+          toast.error('加载文件失败');
         }
       } finally {
         setLoading(false);
@@ -60,16 +61,39 @@ function EditContent() {
       const rawFile = matter.stringify(draftContent, draftMetadata);
       const res = await saveFileContent(token, path, rawFile, sha);
       setSha(res.content?.sha || '');
-      alert('保存成功');
+      toast.success('保存成功');
     } catch (error: any) {
-      alert(error.message || '保存失败');
+      toast.error(error.message || '保存失败');
     } finally {
       setSaving(false);
     }
   };
 
   if (!path) return <div>缺少 path 参数</div>;
-  if (loading) return <div>加载中...</div>;
+  if (loading) return (
+    <div className="flex flex-col h-full bg-white dark:bg-black animate-pulse">
+      <header className="flex justify-between items-center p-4 border-b">
+        <div className="flex gap-2 items-center">
+          <div className="w-16 h-5 bg-gray-200 dark:bg-gray-800 rounded"></div>
+          <div className="w-32 h-5 bg-gray-200 dark:bg-gray-800 rounded"></div>
+        </div>
+        <div className="flex gap-4">
+          <div className="w-10 h-6 bg-gray-200 dark:bg-gray-800 rounded"></div>
+          <div className="w-20 h-6 bg-gray-200 dark:bg-gray-800 rounded"></div>
+        </div>
+      </header>
+      <main className="flex-1 overflow-auto p-12 max-w-4xl mx-auto w-full">
+        <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-1/2 mb-8"></div>
+        <div className="space-y-4">
+          <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-4/5 mt-8"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+        </div>
+      </main>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-black">

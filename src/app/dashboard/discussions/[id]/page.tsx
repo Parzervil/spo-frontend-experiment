@@ -3,6 +3,7 @@ import { fetchDiscussionDetails, addDiscussionComment } from '@/lib/github';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function DiscussionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -22,7 +23,7 @@ export default function DiscussionDetailPage({ params }: { params: Promise<{ id:
       setDiscussion(data);
     } catch (error) {
       console.error(error);
-      alert('加载帖子失败');
+      toast.error('加载帖子失败');
     } finally {
       setLoading(false);
     }
@@ -36,24 +37,41 @@ export default function DiscussionDetailPage({ params }: { params: Promise<{ id:
   const handleReply = async () => {
     if (!token || !discussion) return;
     if (!replyBody.trim()) {
-      alert('回复内容不能为空');
+      toast.warning('回复内容不能为空');
       return;
     }
     setReplying(true);
     try {
       await addDiscussionComment(token, discussion.id, replyBody);
       setReplyBody('');
+      toast.success('回复成功');
       loadData(); // 重新加载获取最新评论
     } catch (error) {
       console.error(error);
-      alert('回复失败');
+      toast.error('回复失败');
     } finally {
       setReplying(false);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">加载中...</div>;
+    return (
+      <div className="p-8 max-w-4xl mx-auto pb-32 animate-pulse">
+        <div className="w-24 h-4 bg-gray-200 dark:bg-gray-800 rounded mb-6"></div>
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-xl p-8 border border-gray-200 dark:border-gray-800 mb-8">
+          <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-6"></div>
+          <div className="flex items-center gap-3 mb-8 pb-6 border-b border-gray-100 dark:border-gray-800">
+            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+            <div className="w-32 h-4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!discussion) {
