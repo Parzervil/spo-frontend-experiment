@@ -18,16 +18,6 @@ export default function KnowledgeBase() {
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'tree'>('grid');
   const [showDropdown, setShowDropdown] = useState(false);
-  
-  // 在 render 的顶层或 return 前组合所有选项
-  const allFolderOptions = Array.from(new Set([
-    user?.login || '', 
-    '设计（Public）', 
-    'IDEAS（Public）', 
-    ...folders
-  ])).filter(Boolean);
-
-  // （后续在渲染时替换掉原来的输入框部分即可）
 
   useEffect(() => {
     if (user && !folderName) {
@@ -100,6 +90,13 @@ export default function KnowledgeBase() {
     ...defaultFolders, 
     ...fileTree.map(f => (f as any).displayPath.split('/')[0]).filter(name => !name.endsWith('.md'))
   ]));
+  
+  const allFolderOptions = Array.from(new Set([
+    user?.login || '', 
+    '设计（Public）', 
+    'IDEAS（Public）', 
+    ...folders
+  ])).filter(Boolean);
   
   // 当前显示的文件
   const displayFiles = currentFolder 
