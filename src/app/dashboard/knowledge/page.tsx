@@ -67,7 +67,17 @@ export default function KnowledgeBase() {
       toast.warning('请输入文件名');
       return;
     }
-    const safeFolder = folderName.trim() || user?.login || 'default';
+    
+    let safeFolder = folderName.trim() || user?.login || 'default';
+    
+    // 如果是自定义文件夹，并且不是 Public 目录，且没有包含当前用户名，则自动追加用户名以保证权限
+    const isPublic = safeFolder.toLowerCase().includes('public');
+    const hasUsername = user?.login && (safeFolder.includes(`(${user.login})`) || safeFolder.includes(`（${user.login}）`) || safeFolder === user.login);
+    
+    if (!isPublic && !hasUsername && user?.login) {
+      safeFolder = `${safeFolder}（${user.login}）`;
+    }
+
     const safeFile = fileName.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
     const path = `knowledge_base/${safeFolder}/${safeFile}.md`;
     router.push(`/dashboard/edit?path=${encodeURIComponent(path)}`);
@@ -244,15 +254,25 @@ export default function KnowledgeBase() {
             
             <div className="mb-4">
               <label className="block text-sm text-gray-500 mb-1">所属文件夹</label>
-              <select 
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-accent"
-              >
-                <option value={user?.login}>个人目录: {user?.login}</option>
-                <option value="设计（Public）">设计（Public）</option>
-                <option value="IDEAS（Public）">IDEAS（Public）</option>
-              </select>
+              <div className="relative">
+                <input 
+                  type="text"
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                  className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-accent"
+                  placeholder="可选择或输入自定义文件夹名称..."
+                  list="folder-options"
+                />
+                <datalist id="folder-options">
+                  <option value={user?.login || ''} />
+                  <option value="设计（Public）" />
+                  <option value="IDEAS（Public）" />
+                  {folders.map(f => (
+                     <option key={f} value={f} />
+                  ))}
+                </datalist>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">支持自定义名称。为了保证您的编辑权限，非公共目录会自动加上您的名字后缀。</p>
             </div>
 
             <div className="mb-6">

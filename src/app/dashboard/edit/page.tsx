@@ -54,6 +54,11 @@ function EditContent() {
       return true;
     }
     
+    // 允许自定义带自己名字后缀的文件夹（例如：我的项目（Parzervil））
+    if (folderName.includes(`(${user.login})`) || folderName.includes(`（${user.login}）`)) {
+      return true;
+    }
+    
     // 其他情况视为“他人的私人文件夹”
     return false;
   }, [currentPath, user]);
