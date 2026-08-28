@@ -86,6 +86,12 @@ export default function KnowledgeBase() {
 
   // 文件夹分组逻辑
   const defaultFolders = ['设计（Public）', 'IDEAS（Public）'];
+  
+  // 提取所有名称中包含 public 的文件夹
+  const publicFoldersFromTree = fileTree
+    .flatMap(f => (f as any).path.split('/'))
+    .filter(part => !part.endsWith('.md') && part.toLowerCase().includes('public'));
+
   const folders = Array.from(new Set([
     ...defaultFolders, 
     ...fileTree.map(f => (f as any).displayPath.split('/')[0]).filter(name => !name.endsWith('.md'))
@@ -95,7 +101,8 @@ export default function KnowledgeBase() {
     user?.login || '', 
     '设计（Public）', 
     'IDEAS（Public）', 
-    ...folders
+    ...folders,
+    ...publicFoldersFromTree
   ])).filter(Boolean);
   
   // 当前显示的文件
