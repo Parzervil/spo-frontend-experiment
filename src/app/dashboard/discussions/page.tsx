@@ -122,7 +122,7 @@ export default function DiscussionsPage() {
                     const selectedNode = repoInfo?.discussionCategories.nodes.find((c: any) => c.id === selectedCategory);
                     if (selectedNode && categoryMap[selectedNode.name]) {
                       const mapping = categoryMap[selectedNode.name];
-                      return <span className="flex items-center gap-2"><span className="text-base">{mapping.icon}</span> <span>{mapping.label}</span></span>;
+                      return <span>{mapping.label}</span>;
                     }
                     return <span className="text-gray-400">请选择...</span>;
                   })()}
@@ -146,9 +146,8 @@ export default function DiscussionsPage() {
                               }}
                               className="px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#333] cursor-pointer flex justify-between items-center text-sm transition-colors"
                             >
-                              <span className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                                <span className="text-base">{mapping.icon}</span>
-                                <span>{mapping.label}</span>
+                              <span className="text-gray-900 dark:text-gray-100">
+                                {mapping.label}
                               </span>
                               {selectedCategory === cat.id && (
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><polyline points="20 6 9 17 4 12"/></svg>
