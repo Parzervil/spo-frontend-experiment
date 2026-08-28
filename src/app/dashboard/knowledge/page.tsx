@@ -68,8 +68,23 @@ export default function KnowledgeBase() {
       toast.warning('请输入文件名');
       return;
     }
+
+    const inputFolder = folderName.trim();
+    // 检查是否试图使用其他人的文件夹名称（已存在于树中，但不是自己的且不是公开的）
+    const isOtherPeopleFolder = folders.some(f => 
+      f === inputFolder && 
+      !f.toLowerCase().includes('public') && 
+      f !== user?.login && 
+      !f.includes(`(${user?.login})`) && 
+      !f.includes(`（${user?.login}）`)
+    );
+
+    if (isOtherPeopleFolder) {
+      toast.error('禁止在其他协作者的私人文件夹中新建文件');
+      return;
+    }
     
-    let safeFolder = folderName.trim() || user?.login || 'default';
+    let safeFolder = inputFolder || user?.login || 'default';
     
     // 如果是自定义文件夹，并且不是 Public 目录，且没有包含当前用户名，则自动追加用户名以保证权限
     const isPublic = safeFolder.toLowerCase().includes('public');
@@ -97,11 +112,20 @@ export default function KnowledgeBase() {
     ...fileTree.map(f => (f as any).displayPath.split('/')[0]).filter(name => !name.endsWith('.md'))
   ]));
   
+  // 筛选出属于自己或公开的文件夹，排除其他人的私人文件夹
+  const myAndPublicFolders = folders.filter(f => {
+    const lower = f.toLowerCase();
+    if (lower.includes('public')) return true;
+    if (f === user?.login) return true;
+    if (f.includes(`(${user?.login})`) || f.includes(`（${user?.login}）`)) return true;
+    return false;
+  });
+  
   const allFolderOptions = Array.from(new Set([
     user?.login || '', 
     '设计（Public）', 
     'IDEAS（Public）', 
-    ...folders,
+    ...myAndPublicFolders,
     ...publicFoldersFromTree
   ])).filter(Boolean);
   
