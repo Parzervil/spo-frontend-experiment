@@ -75,65 +75,95 @@ export default function DiscussionsPage() {
     <div className="p-8 max-w-5xl mx-auto font-[family-name:var(--font-geist-sans)]">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">协作中心</h1>
-        <button 
-          onClick={() => setIsCreating(!isCreating)}
-          className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          {isCreating ? '取消发布' : '发起新讨论'}
-        </button>
+        {!isCreating && (
+          <button 
+            onClick={() => setIsCreating(true)}
+            className="bg-accent text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm shadow-accent/20 flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            发起新讨论
+          </button>
+        )}
       </div>
 
       {isCreating && (
-        <form onSubmit={handleSubmit} className="mb-8 p-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-          <h2 className="text-lg font-bold mb-4">发起新讨论</h2>
-          <div className="mb-4">
-            <label className="block text-sm text-gray-500 mb-1">分类</label>
-            <select 
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full p-2 border rounded bg-white dark:bg-black"
+        <form onSubmit={handleSubmit} className="mb-10 p-6 sm:p-8 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-all animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <h2 className="text-xl font-bold">发起新讨论</h2>
+            <button 
+              type="button"
+              onClick={() => setIsCreating(false)}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              title="关闭"
             >
-              {repoInfo?.discussionCategories.nodes.map((cat: any) => {
-                const categoryMap: Record<string, string> = {
-                  'General': '综合讨论',
-                  'Ideas': '想法与创意',
-                  'Q&A': '问答',
-                  'Show and tell': '分享展示',
-                  'Announcements': '公告'
-                };
-                return (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.emoji} {categoryMap[cat.name] || cat.name}
-                  </option>
-                );
-              })}
-            </select>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
           </div>
-          <div className="mb-4">
-            <label className="block text-sm text-gray-500 mb-1">标题</label>
-            <input 
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="w-full p-2 border rounded bg-white dark:bg-black"
-              placeholder="一句话概括讨论主题"
-            />
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div className="md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">分类</label>
+              <div className="relative">
+                <select 
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full p-3 pr-10 appearance-none border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-black focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-sm cursor-pointer"
+                >
+                  {repoInfo?.discussionCategories.nodes.map((cat: any) => {
+                    const categoryMap: Record<string, string> = {
+                      'General': '综合讨论',
+                      'Ideas': '想法与创意',
+                      'Q&A': '问答',
+                      'Show and tell': '分享展示',
+                      'Announcements': '公告'
+                    };
+                    return (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.emoji} {categoryMap[cat.name] || cat.name}
+                      </option>
+                    );
+                  })}
+                </select>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-3 top-3.5 text-gray-400 pointer-events-none"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+            
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">标题</label>
+              <input 
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="w-full p-3 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-black focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-sm"
+                placeholder="一句话概括讨论主题"
+                autoFocus
+              />
+            </div>
           </div>
-          <div className="mb-4">
-            <label className="block text-sm text-gray-500 mb-1">正文内容 (支持 Markdown)</label>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">正文内容 (支持 Markdown)</label>
             <textarea 
               value={newBody}
               onChange={(e) => setNewBody(e.target.value)}
-              className="w-full p-2 border rounded bg-white dark:bg-black h-32 resize-y"
-              placeholder="详细描述你的想法、建议或问题..."
+              className="w-full p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-black focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all min-h-[160px] resize-y text-sm leading-relaxed font-[family-name:var(--font-geist-mono)]"
+              placeholder="详细描述你的想法、建议或问题... (支持使用 Markdown 排版)"
             />
           </div>
-          <div className="flex justify-end">
+          
+          <div className="flex justify-end gap-3 pt-2">
+            <button 
+              type="button"
+              onClick={() => setIsCreating(false)}
+              className="px-6 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              取消
+            </button>
             <button 
               type="submit" 
               disabled={submitting}
-              className="bg-accent text-white px-6 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="bg-accent text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-2 shadow-sm shadow-accent/20"
             >
-              {submitting ? '发布中...' : '提交讨论'}
+              {submitting ? '发布中...' : '确认发布'}
             </button>
           </div>
         </form>
