@@ -17,6 +17,15 @@ export default function DiscussionsPage() {
   const [newBody, setNewBody] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+  const categoryMap: Record<string, { label: string, icon: string }> = {
+    'Announcements': { label: '公告', icon: '📢' },
+    'General': { label: '综合讨论', icon: '💬' },
+    'Ideas': { label: '想法与创意', icon: '💡' },
+    'Q&A': { label: '问答', icon: '🙋' },
+    'Show and tell': { label: '分享展示', icon: '🙌' }
+  };
 
   const loadData = async () => {
     if (!token) return;
@@ -29,9 +38,10 @@ export default function DiscussionsPage() {
       setDiscussions(list);
       setRepoInfo(repo);
       
-      // 默认选择第一个分类
+      // 默认选择第一个允许的分类
       if (repo.discussionCategories.nodes.length > 0) {
-        setSelectedCategory(repo.discussionCategories.nodes[0].id);
+        const firstAllowed = repo.discussionCategories.nodes.find((cat: any) => categoryMap[cat.name]);
+        setSelectedCategory(firstAllowed ? firstAllowed.id : repo.discussionCategories.nodes[0].id);
       }
     } catch (error) {
       console.error(error);
@@ -104,27 +114,51 @@ export default function DiscussionsPage() {
             <div className="md:col-span-1">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">分类</label>
               <div className="relative">
-                <select 
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full p-3 pr-10 appearance-none border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-black focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-sm cursor-pointer"
+                <div 
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  className="w-full p-3 pr-10 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-black hover:border-gray-300 dark:hover:border-gray-700 transition-all text-sm cursor-pointer flex items-center h-[46px]"
                 >
-                  {repoInfo?.discussionCategories.nodes.map((cat: any) => {
-                    const categoryMap: Record<string, string> = {
-                      'General': '综合讨论',
-                      'Ideas': '想法与创意',
-                      'Q&A': '问答',
-                      'Show and tell': '分享展示',
-                      'Announcements': '公告'
-                    };
-                    return (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.emoji} {categoryMap[cat.name] || cat.name}
-                      </option>
-                    );
-                  })}
-                </select>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-3 top-3.5 text-gray-400 pointer-events-none"><polyline points="6 9 12 15 18 9"/></svg>
+                  {(() => {
+                    const selectedNode = repoInfo?.discussionCategories.nodes.find((c: any) => c.id === selectedCategory);
+                    if (selectedNode && categoryMap[selectedNode.name]) {
+                      const mapping = categoryMap[selectedNode.name];
+                      return <span className="flex items-center gap-2"><span className="text-base">{mapping.icon}</span> <span>{mapping.label}</span></span>;
+                    }
+                    return <span className="text-gray-400">请选择...</span>;
+                  })()}
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`absolute right-3 top-[15px] text-gray-400 pointer-events-none transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+                
+                {showCategoryDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowCategoryDropdown(false)}></div>
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-lg shadow-xl z-50 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      {repoInfo?.discussionCategories.nodes
+                        .filter((cat: any) => categoryMap[cat.name])
+                        .map((cat: any) => {
+                          const mapping = categoryMap[cat.name];
+                          return (
+                            <div
+                              key={cat.id}
+                              onClick={() => {
+                                setSelectedCategory(cat.id);
+                                setShowCategoryDropdown(false);
+                              }}
+                              className="px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#333] cursor-pointer flex justify-between items-center text-sm transition-colors"
+                            >
+                              <span className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
+                                <span className="text-base">{mapping.icon}</span>
+                                <span>{mapping.label}</span>
+                              </span>
+                              {selectedCategory === cat.id && (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><polyline points="20 6 9 17 4 12"/></svg>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             
