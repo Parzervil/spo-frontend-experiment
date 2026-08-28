@@ -4,7 +4,7 @@ import mammoth from 'mammoth';
 import { toast } from 'sonner';
 
 interface AssetImporterProps {
-  onImport: (markdown: string) => void;
+  onImport: (markdown: string, filename: string) => void;
 }
 
 export default function AssetImporter({ onImport }: AssetImporterProps) {
@@ -12,21 +12,20 @@ export default function AssetImporter({ onImport }: AssetImporterProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
+    const rawName = file.name;
+    const baseName = rawName.substring(0, rawName.lastIndexOf('.')) || rawName;
+    const newFileName = `${baseName}.md`;
+
     if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
       let text = await file.text();
       if (file.name.endsWith('.txt')) {
-        // 对于纯文本，Markdown 会把单换行视为同段落。将其替换为双换行以强制分段
         text = text.replace(/([^\n])\n([^\n])/g, '$1\n\n$2');
       }
-      onImport(text);
+      onImport(text, newFileName);
     } else if (file.name.endsWith('.docx')) {
       const arrayBuffer = await file.arrayBuffer();
-      // mammoth parses the docx to raw text or HTML.
-      // We will parse it to HTML, which Tiptap can consume and convert to Markdown.
       const result = await mammoth.convertToHtml({ arrayBuffer });
-      // In a real scenario, you might want to sanitize this HTML or convert to MD directly.
-      // Tiptap can accept HTML and will format it properly.
-      onImport(result.value);
+      onImport(result.value, newFileName);
     } else {
       toast.error('仅支持 .txt, .md, .docx 格式');
     }

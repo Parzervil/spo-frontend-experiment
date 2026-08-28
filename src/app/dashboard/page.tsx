@@ -50,10 +50,11 @@ export default function Dashboard() {
       <div className="max-w-xl">
         <h2 className="text-lg font-medium mb-4">快捷导入资产</h2>
         <AssetImporter 
-          onImport={(md) => {
+          onImport={(md, filename) => {
             sessionStorage.setItem('draft_import', md);
-            const timestamp = new Date().getTime();
-            router.push(`/dashboard/edit?path=knowledge_base/doc_${timestamp}.md&import=true`);
+            const userFolder = user?.login || 'default';
+            const fullPath = `knowledge_base/${userFolder}/${filename}`;
+            router.push(`/dashboard/edit?path=${encodeURIComponent(fullPath)}&import=true`);
           }} 
         />
       </div>
