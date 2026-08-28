@@ -287,11 +287,13 @@ export default function KnowledgeBase() {
                 {showDropdown && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto py-1">
                     {allFolderOptions
-                      .filter(opt => opt && typeof opt === 'string' && opt.toLowerCase().includes(folderName.toLowerCase()))
+                      .filter(opt => opt && typeof opt === 'string')
                       .map(opt => (
                         <div
                           key={opt as string}
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            // 使用 onMouseDown 代替 onClick，防止 onBlur 抢先执行导致点击失效
+                            e.preventDefault();
                             setFolderName(opt as string);
                             setShowDropdown(false);
                           }}
@@ -303,8 +305,8 @@ export default function KnowledgeBase() {
                           )}
                         </div>
                       ))}
-                    {allFolderOptions.filter(opt => opt && typeof opt === 'string' && opt.toLowerCase().includes(folderName.toLowerCase())).length === 0 && (
-                      <div className="px-4 py-3 text-sm text-gray-500 italic text-center">
+                    {!allFolderOptions.includes(folderName) && folderName.trim() !== '' && (
+                      <div className="px-4 py-3 text-sm text-gray-500 italic text-center border-t border-gray-100 dark:border-[#333]">
                         将创建新文件夹 "{folderName}"
                       </div>
                     )}
