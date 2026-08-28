@@ -17,6 +17,17 @@ export default function KnowledgeBase() {
   const [fileName, setFileName] = useState('');
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'tree'>('grid');
+  const [showDropdown, setShowDropdown] = useState(false);
+  
+  // 在 render 的顶层或 return 前组合所有选项
+  const allFolderOptions = Array.from(new Set([
+    user?.login || '', 
+    '设计（Public）', 
+    'IDEAS（Public）', 
+    ...folders
+  ])).filter(Boolean);
+
+  // （后续在渲染时替换掉原来的输入框部分即可）
 
   useEffect(() => {
     if (user && !folderName) {
@@ -258,19 +269,43 @@ export default function KnowledgeBase() {
                 <input 
                   type="text"
                   value={folderName}
-                  onChange={(e) => setFolderName(e.target.value)}
-                  className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-accent"
+                  onChange={(e) => {
+                    setFolderName(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                  className="w-full p-2 pr-8 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-black focus:outline-none focus:ring-1 focus:ring-accent"
                   placeholder="可选择或输入自定义文件夹名称..."
-                  list="folder-options"
                 />
-                <datalist id="folder-options">
-                  <option value={user?.login || ''} />
-                  <option value="设计（Public）" />
-                  <option value="IDEAS（Public）" />
-                  {folders.map(f => (
-                     <option key={f} value={f} />
-                  ))}
-                </datalist>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-3 top-3 text-gray-400 pointer-events-none"><polyline points="6 9 12 15 18 9"/></svg>
+                
+                {showDropdown && (
+                  <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto py-1">
+                    {allFolderOptions
+                      .filter(opt => opt && typeof opt === 'string' && opt.toLowerCase().includes(folderName.toLowerCase()))
+                      .map(opt => (
+                        <div
+                          key={opt as string}
+                          onClick={() => {
+                            setFolderName(opt as string);
+                            setShowDropdown(false);
+                          }}
+                          className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#333] cursor-pointer flex justify-between items-center text-sm transition-colors"
+                        >
+                          <span className="text-gray-900 dark:text-gray-100">{opt as string}</span>
+                          {folderName === opt && (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><polyline points="20 6 9 17 4 12"/></svg>
+                          )}
+                        </div>
+                      ))}
+                    {allFolderOptions.filter(opt => opt && typeof opt === 'string' && opt.toLowerCase().includes(folderName.toLowerCase())).length === 0 && (
+                      <div className="px-4 py-3 text-sm text-gray-500 italic text-center">
+                        将创建新文件夹 "{folderName}"
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <p className="text-xs text-gray-400 mt-1">支持自定义名称。为了保证您的编辑权限，非公共目录会自动加上您的名字后缀。</p>
             </div>
