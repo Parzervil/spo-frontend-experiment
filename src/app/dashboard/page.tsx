@@ -5,19 +5,27 @@ import { useRouter } from 'next/navigation';
 import { Octokit } from 'octokit';
 import AssetImporter from '@/components/AssetImporter';
 
+import { toast } from 'sonner';
+
 export default function Dashboard() {
   const { token, user, logout, setUser } = useAuthStore();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const unsub = useAuthStore.persist.onFinishHydration(() => setHasHydrated(true));
+    if (useAuthStore.persist.hasHydrated()) {
+      setHasHydrated(true);
+    }
+    return () => unsub();
   }, []);
 
   useEffect(() => {
-    if (mounted && !token) {
+    if (!hasHydrated) return;
+
+    if (!token) {
       router.replace('/');
-    } else if (mounted && token && !user) {
+    } else if (token && !user) {
       // 验证 token 并获取用户信息
       const fetchUser = async () => {
         try {
@@ -28,17 +36,34 @@ export default function Dashboard() {
             avatar_url: data.avatar_url,
             name: data.name,
           });
-        } catch (error) {
+        } catch (error: any) {
           console.error("Token invalid or expired", error);
-          logout();
-          router.replace('/');
+          if (error.status === 401) {
+            toast.error("登录凭证已失效，请重新登录。");
+            logout();
+            router.replace('/');
+          } else {
+            // 网络原因无法直连 GitHub API 时，不强行清空 Token 和踢出，提供保底用户对象
+            toast.warning("无法连通 GitHub API 用户接口，已使用本地凭据进入工作台。");
+            setUser({
+              login: 'co-creator',
+              avatar_url: '',
+              name: '共创者',
+            });
+          }
         }
       };
       fetchUser();
     }
-  }, [mounted, token, router, setUser, user, logout]);
+  }, [hasHydrated, token, router, setUser, user, logout]);
 
-  if (!mounted || !token) return null;
+  if (!hasHydrated || !token) {
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <p className="text-gray-400 animate-pulse">正在加载工作台...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">

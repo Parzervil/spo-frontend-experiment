@@ -5,7 +5,7 @@ export interface FileNode {
   path: string;
   sha: string;
   size: number;
-  type: 'file' | 'dir';
+  type: 'file' | 'dir' | 'blob' | 'tree';
   url: string;
   download_url: string | null;
 }
@@ -45,28 +45,30 @@ export const useFileStore = create<FileStoreState>((set) => ({
   error: null,
 
   setFileTree: (tree) => {
-    // 仅提取文件进行列表展示（过滤掉纯目录或隐藏文件）
-    const validFiles = tree.filter(f => (f.type === 'file' || f.type === 'blob') && !f.path.startsWith('.'));
+    // 仅提取有效 markdown 文件或 blob 进行展示（过滤掉纯目录或系统隐藏文件）
+    const validFiles = (Array.isArray(tree) ? tree : []).filter(
+      (f) => (f.type === 'file' || f.type === 'blob') && !f.path.startsWith('.') && f.path.endsWith('.md')
+    );
 
     set({
       fileTree: tree,
       // 00区 - 核心法则区：只读的底层设定
-      whitepaperFiles: validFiles.filter(f => f.path.startsWith('00_白皮书/')),
+      whitepaperFiles: validFiles.filter((f) => f.path.startsWith('00_白皮书/')),
       // 01区 - 设定百科区：世界观词条库
-      wikiFiles: validFiles.filter(f => f.path.startsWith('01_星途百科/')),
+      wikiFiles: validFiles.filter((f) => f.path.startsWith('01_星途百科/')),
       // 02区 - 官方正史区：通过审核的共创小说
-      canonFiles: validFiles.filter(f => f.path.startsWith('02_星途志异/')),
+      canonFiles: validFiles.filter((f) => f.path.startsWith('02_星途志异/')),
       // 03区 - 自由沙盒区：作者草稿与测试区
-      sandboxFiles: validFiles.filter(f => f.path.startsWith('03_沙盒区/')),
-      // 游离于四大体系外的其他文件
-      uncategorizedFiles: validFiles.filter(f => 
-        !f.path.startsWith('00_白皮书/') &&
-        !f.path.startsWith('01_星途百科/') &&
-        !f.path.startsWith('02_星途志异/') &&
-        !f.path.startsWith('03_沙盒区/') &&
-        f.path !== 'README.md' &&
-        f.path !== 'LICENSE'
-      )
+      sandboxFiles: validFiles.filter((f) => f.path.startsWith('03_沙盒区/')),
+      // 游离于四大体系外的其他 Markdown 文件
+      uncategorizedFiles: validFiles.filter(
+        (f) =>
+          !f.path.startsWith('00_白皮书/') &&
+          !f.path.startsWith('01_星途百科/') &&
+          !f.path.startsWith('02_星途志异/') &&
+          !f.path.startsWith('03_沙盒区/') &&
+          f.path !== 'README.md'
+      ),
     });
   },
   
@@ -74,3 +76,4 @@ export const useFileStore = create<FileStoreState>((set) => ({
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
 }));
+

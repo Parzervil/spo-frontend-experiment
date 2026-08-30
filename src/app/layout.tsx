@@ -32,6 +32,19 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <Toaster position="top-center" richColors />
+          {process.env.NODE_ENV === 'development' && (
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(regs) {
+                      for (let reg of regs) { reg.unregister(); }
+                    });
+                  }
+                `,
+              }}
+            />
+          )}
         </ThemeProvider>
       </body>
     </html>

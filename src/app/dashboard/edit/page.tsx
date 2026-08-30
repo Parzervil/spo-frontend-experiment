@@ -27,24 +27,46 @@ function EditContent() {
   const [isEditingPath, setIsEditingPath] = useState(false);
   const [showMetadata, setShowMetadata] = useState(true);
 
-  // 基于四大核心板块的权限控制
+  // 简单的基于文件夹的权限控制
   const canEdit = useMemo(() => {
     if (!currentPath || !user) return false;
     
-    // 获取根目录名称
-    const rootFolder = currentPath.split('/')[0];
+    // 提取真正的归属文件夹名称
+    const parts = currentPath.split('/');
+    let folderName = parts[0];
     
-    // 创始人白名单（后续可移入环境变量或后台配置）
-    const founders = ['Parzervil']; 
-
-    // 00_白皮书：仅核心创始人可修改底层设定，防止吃书
-    if (rootFolder === '00_白皮书') {
-      return founders.includes(user.login);
+    // 如果路径是 knowledge_base/文件夹/文件.md，我们要判断的拥有者其实是第二个层级
+    if (folderName === 'knowledge_base' && parts.length > 2) {
+      folderName = parts[1];
+    } else if (folderName === 'knowledge_base' && parts.length <= 2) {
+      // 根目录下直接建的文件，所有人可编辑
+      return true;
     }
     
-    // 01_星途百科 / 02_星途志异：原则上需审核后由官方移入，但暂时开放编辑（也可根据需要收紧权限）
-    // 03_沙盒区：所有人自由创作
-    return true;
+    // 如果没有放在任何文件夹里，或者是自己的文件夹
+    if (!currentPath.includes('/') || folderName === user.login) {
+      return true;
+    }
+    
+    // 00_白皮书：核心底层设定，仅创始人有权直接修改
+    if (folderName === '00_白皮书') {
+      const founders = ['Parzervil'];
+      return founders.includes(user.login);
+    }
+
+    // 预设的公共与共创分区允许所有人编辑
+    const publicFolders = ['knowledge_base', 'docs', 'wiki', 'public', 'materials', '01_星途百科', '02_星途志异', '03_沙盒区'];
+    if (publicFolders.includes(folderName) || folderName.toLowerCase().includes('public')) {
+      return true;
+    }
+    
+    // 允许自定义带自己名字后缀的文件夹（例如：我的项目（Parzervil））
+    if (folderName.includes(`(${user.login})`) || folderName.includes(`（${user.login}）`)) {
+      return true;
+    }
+    
+    // 其他情况视为“他人的私人文件夹”
+    return false;
   }, [currentPath, user]);
 
   useEffect(() => {
@@ -85,7 +107,7 @@ function EditContent() {
       
       let finalPath = currentPath;
       const isNewFile = !sha; // 记录是否为全新创建的文件
-      
+
       if (editPath !== currentPath && editPath.trim().endsWith('.md')) {
         finalPath = editPath.trim();
         // 如果重命名了，保存新文件并删除旧文件
@@ -106,7 +128,7 @@ function EditContent() {
       setIsEditingPath(false);
       toast.success('保存成功');
 
-      // === 第四步：协同工作流 (触发自动审核帖) ===
+      // === 协同工作流 (触发自动审核帖) ===
       // 仅在“沙盒区”第一次新建文件时触发
       if (isNewFile && finalPath.startsWith('03_沙盒区/')) {
         toast.info('正在为您创建沙盒讨论帖...');
@@ -114,7 +136,6 @@ function EditContent() {
           const repoData = await fetchRepoAndCategories(token);
           const repoId = repoData.id;
           const categories = repoData.discussionCategories.nodes;
-          // 尽量寻找默认分类，找不到则使用第一个可用分类
           const targetCategory = 
             categories.find((c: any) => c.name === 'Ideas' || c.name === 'Show and tell' || c.name === 'General') || 
             categories[0];

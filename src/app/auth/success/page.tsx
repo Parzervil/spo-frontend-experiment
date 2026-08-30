@@ -8,17 +8,28 @@ function AuthSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setToken = useAuthStore((state) => state.setToken);
+  const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
     const token = searchParams.get('access_token');
+    const userLogin = searchParams.get('user_login');
+    const userAvatar = searchParams.get('user_avatar');
+    const userName = searchParams.get('user_name');
+
     if (token) {
       setToken(token);
-      // 清除 URL 中的 token 并跳转到工作台
+      if (userLogin) {
+        setUser({
+          login: userLogin,
+          avatar_url: userAvatar || '',
+          name: userName || userLogin,
+        });
+      }
       router.replace('/dashboard');
     } else {
       router.replace('/');
     }
-  }, [searchParams, router, setToken]);
+  }, [searchParams, router, setToken, setUser]);
 
   return (
     <div className="flex min-h-screen items-center justify-center font-[family-name:var(--font-geist-sans)]">

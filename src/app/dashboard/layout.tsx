@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -7,6 +8,11 @@ import ThemeSwitcher from '@/components/ThemeSwitcher';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navs = [
     { name: '工作台首页', path: '/dashboard' },
@@ -41,17 +47,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <ThemeSwitcher />
 
         <div className="p-4 border-t border-gray-200 dark:border-[#222]">
-          <div className="flex items-center gap-3">
-            {user?.avatar_url && (
-              <img src={user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full" />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name || user?.login}</p>
+          {mounted && (
+            <div className="flex items-center gap-3">
+              {user?.avatar_url && (
+                <img src={user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.name || user?.login || '未登录'}</p>
+              </div>
+              <button onClick={logout} className="text-xs text-red-500 hover:underline shrink-0">
+                退出
+              </button>
             </div>
-            <button onClick={logout} className="text-xs text-red-500 hover:underline shrink-0">
-              退出
-            </button>
-          </div>
+          )}
         </div>
       </aside>
 
