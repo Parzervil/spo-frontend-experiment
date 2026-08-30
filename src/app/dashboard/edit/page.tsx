@@ -27,40 +27,24 @@ function EditContent() {
   const [isEditingPath, setIsEditingPath] = useState(false);
   const [showMetadata, setShowMetadata] = useState(true);
 
-  // 简单的基于文件夹的权限控制
+  // 基于四大核心板块的权限控制
   const canEdit = useMemo(() => {
     if (!currentPath || !user) return false;
     
-    // 提取真正的归属文件夹名称
-    const parts = currentPath.split('/');
-    let folderName = parts[0];
+    // 获取根目录名称
+    const rootFolder = currentPath.split('/')[0];
     
-    // 如果路径是 knowledge_base/文件夹/文件.md，我们要判断的拥有者其实是第二个层级
-    if (folderName === 'knowledge_base' && parts.length > 2) {
-      folderName = parts[1];
-    } else if (folderName === 'knowledge_base' && parts.length <= 2) {
-      // 根目录下直接建的文件，所有人可编辑
-      return true;
+    // 创始人白名单（后续可移入环境变量或后台配置）
+    const founders = ['Parzervil']; 
+
+    // 00_白皮书：仅核心创始人可修改底层设定，防止吃书
+    if (rootFolder === '00_白皮书') {
+      return founders.includes(user.login);
     }
     
-    // 如果没有放在任何文件夹里，或者是自己的文件夹
-    if (!currentPath.includes('/') || folderName === user.login) {
-      return true;
-    }
-    
-    // 预设的公共文件夹允许所有人编辑
-    const publicFolders = ['knowledge_base', 'docs', 'wiki', 'public', 'materials'];
-    if (publicFolders.includes(folderName) || folderName.toLowerCase().includes('public')) {
-      return true;
-    }
-    
-    // 允许自定义带自己名字后缀的文件夹（例如：我的项目（Parzervil））
-    if (folderName.includes(`(${user.login})`) || folderName.includes(`（${user.login}）`)) {
-      return true;
-    }
-    
-    // 其他情况视为“他人的私人文件夹”
-    return false;
+    // 01_星途百科 / 02_星途志异：原则上需审核后由官方移入，但暂时开放编辑（也可根据需要收紧权限）
+    // 03_沙盒区：所有人自由创作
+    return true;
   }, [currentPath, user]);
 
   useEffect(() => {

@@ -46,7 +46,7 @@ export const useFileStore = create<FileStoreState>((set) => ({
 
   setFileTree: (tree) => {
     // 仅提取文件进行列表展示（过滤掉纯目录或隐藏文件）
-    const validFiles = tree.filter(f => f.type === 'file' && !f.path.startsWith('.'));
+    const validFiles = tree.filter(f => (f.type === 'file' || f.type === 'blob') && !f.path.startsWith('.'));
 
     set({
       fileTree: tree,
