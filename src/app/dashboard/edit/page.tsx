@@ -1,6 +1,6 @@
 'use client';
 import Editor from '@/components/Editor';
-import { fetchFileContent, saveFileContent } from '@/lib/github';
+import { fetchFileContent, saveFileContent, fetchRepoAndCategories, createDiscussion } from '@/lib/github';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense, useMemo } from 'react';
@@ -84,6 +84,8 @@ function EditContent() {
       const rawFile = matter.stringify(draftContent, draftMetadata);
       
       let finalPath = currentPath;
+      const isNewFile = !sha; // 记录是否为全新创建的文件
+      
       if (editPath !== currentPath && editPath.trim().endsWith('.md')) {
         finalPath = editPath.trim();
         // 如果重命名了，保存新文件并删除旧文件
@@ -103,6 +105,34 @@ function EditContent() {
       
       setIsEditingPath(false);
       toast.success('保存成功');
+
+      // === 第四步：协同工作流 (触发自动审核帖) ===
+      // 仅在“沙盒区”第一次新建文件时触发
+      if (isNewFile && finalPath.startsWith('03_沙盒区/')) {
+        toast.info('正在为您创建沙盒讨论帖...');
+        try {
+          const repoData = await fetchRepoAndCategories(token);
+          const repoId = repoData.id;
+          const categories = repoData.discussionCategories.nodes;
+          // 尽量寻找默认分类，找不到则使用第一个可用分类
+          const targetCategory = 
+            categories.find((c: any) => c.name === 'Ideas' || c.name === 'Show and tell' || c.name === 'General') || 
+            categories[0];
+            
+          if (repoId && targetCategory) {
+            const fileName = finalPath.split('/').pop()?.replace('.md', '') || '未命名设定';
+            const author = user?.login || '未知作者';
+            const title = `【新设定审核请求】${fileName}`;
+            const body = `**作者**：@${author}\n**文件路径**：\`${finalPath}\`\n\n请管理团队与社区成员在此讨论该沙盒草稿是否符合白皮书规范，并给出“转正”或“修改”的建议。\n\n> 预览链接：[点击前往平台查看](${window.location.origin}/dashboard/edit?path=${encodeURIComponent(finalPath)})`;
+            
+            await createDiscussion(token, repoId, targetCategory.id, title, body);
+            toast.success('审核讨论帖创建成功！团队成员现可前往 Discussions 参与讨论。');
+          }
+        } catch (discError) {
+          console.error('自动发帖失败:', discError);
+          toast.warning('文件已保存，但自动发起讨论失败，请稍后手动前往 GitHub 发起讨论。');
+        }
+      }
     } catch (error: any) {
       toast.error(error.message || '保存失败');
     } finally {
