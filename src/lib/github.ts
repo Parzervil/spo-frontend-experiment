@@ -1,4 +1,5 @@
 import { Octokit } from 'octokit';
+import matter from 'gray-matter';
 
 // 获取配置好的目标仓库信息
 const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || '';
@@ -63,8 +64,20 @@ export async function fetchFileContent(token: string, path: string) {
     // 将 Base64 解码为 UTF-8 字符串
     const decodedContent = decodeURIComponent(escape(atob(data.content)));
 
+    let parsedContent = decodedContent;
+    let metadata = {};
+    try {
+      const matterResult = matter(decodedContent);
+      parsedContent = matterResult.content;
+      metadata = matterResult.data;
+    } catch (e) {
+      console.warn("Frontmatter parsing failed", e);
+    }
+
     return {
-      content: decodedContent,
+      content: parsedContent,
+      metadata,
+      rawContent: decodedContent,
       sha: data.sha,
     };
   } catch (error: any) {
