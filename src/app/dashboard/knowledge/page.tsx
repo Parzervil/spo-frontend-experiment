@@ -8,7 +8,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 
 export default function KnowledgeBase() {
-  const { token } = useAuthStore();
+  const { token, isGuest } = useAuthStore();
   const router = useRouter();
   const { 
     fileTree, 
@@ -30,7 +30,7 @@ export default function KnowledgeBase() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const loadTree = async () => {
-    if (!token) return;
+    if (!token && !isGuest) return;
     setLoading(true);
     try {
       const tree = await fetchFileTree(token);
@@ -54,11 +54,11 @@ export default function KnowledgeBase() {
   };
 
   useEffect(() => {
-    if (token && fileTree.length === 0) {
+    if ((token || isGuest) && fileTree.length === 0) {
       loadTree();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, isGuest]);
 
   const handleCreate = () => {
     if (!fileName.trim()) {
@@ -219,17 +219,28 @@ export default function KnowledgeBase() {
         )}
 
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="w-full bg-accent text-white px-4 py-3 rounded-xl font-bold hover:opacity-90 shadow-lg shadow-accent/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            草拟新设定
-          </button>
-          <p className="text-xs text-gray-500 text-center mt-3">新文件将默认进入「沙盒区」推演</p>
+          {isGuest ? (
+            <div className="p-3 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 rounded-xl text-center">
+              <p className="text-xs text-amber-800 dark:text-amber-300 font-medium">游客只读浏览模式</p>
+              <Link href="/" className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline mt-1.5 inline-block">
+                登录 GitHub 开启草拟推演 &rarr;
+              </Link>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="w-full bg-accent text-white px-4 py-3 rounded-xl font-bold hover:opacity-90 shadow-lg shadow-accent/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                草拟新设定
+              </button>
+              <p className="text-xs text-gray-500 text-center mt-3">新文件将默认进入「沙盒区」推演</p>
+            </>
+          )}
         </div>
 
         <button

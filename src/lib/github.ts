@@ -15,10 +15,11 @@ function checkConfig() {
 
 /**
  * 获取仓库的目录树结构 (递归)
+ * 支持传入 token 或 null (游客未认证读取公开仓库)
  */
-export async function fetchFileTree(token: string) {
+export async function fetchFileTree(token?: string | null) {
   checkConfig();
-  const octokit = new Octokit({ auth: token });
+  const octokit = new Octokit(token ? { auth: token } : {});
   
   try {
     const { data } = await octokit.rest.git.getTree({
@@ -27,9 +28,6 @@ export async function fetchFileTree(token: string) {
       tree_sha: 'HEAD',
       recursive: '1',
     });
-    // data.tree is an array of objects with path, type, size, etc.
-    // map size to make it compatible with old getContent response if needed, 
-    // actually getTree returns size for blobs.
     return data.tree;
   } catch (error) {
     console.error('Failed to fetch file tree:', error);
@@ -39,11 +37,12 @@ export async function fetchFileTree(token: string) {
 
 /**
  * 获取具体文件的内容
+ * 支持传入 token 或 null (游客未认证读取公开仓库)
  * 返回的内容为 Base64 编码，需要自行解码。同时返回文件的 sha 用于更新校验。
  */
-export async function fetchFileContent(token: string, path: string) {
+export async function fetchFileContent(token: string | null | undefined, path: string) {
   checkConfig();
-  const octokit = new Octokit({ auth: token });
+  const octokit = new Octokit(token ? { auth: token } : {});
 
   try {
     const { data } = await octokit.rest.repos.getContent({
@@ -79,7 +78,8 @@ export async function fetchFileContent(token: string, path: string) {
 /**
  * 获取仓库的 ID 和可用的 Discussion Categories (用于发帖)
  */
-export async function fetchRepoAndCategories(token: string) {
+export async function fetchRepoAndCategories(token?: string | null) {
+  if (!token) return null;
   checkConfig();
   const octokit = new Octokit({ auth: token });
   const query = `
@@ -96,14 +96,20 @@ export async function fetchRepoAndCategories(token: string) {
       }
     }
   `;
-  const res: any = await octokit.graphql(query, { owner, repo });
-  return res.repository;
+  try {
+    const res: any = await octokit.graphql(query, { owner, repo });
+    return res.repository;
+  } catch (error) {
+    console.error('Failed to fetch repo & categories:', error);
+    return null;
+  }
 }
 
 /**
  * 获取讨论列表 (Discussions)
  */
-export async function fetchDiscussions(token: string) {
+export async function fetchDiscussions(token?: string | null) {
+  if (!token) return [];
   checkConfig();
   const octokit = new Octokit({ auth: token });
   const query = `
@@ -132,14 +138,22 @@ export async function fetchDiscussions(token: string) {
       }
     }
   `;
-  const res: any = await octokit.graphql(query, { owner, repo });
-  return res.repository.discussions.nodes;
+  try {
+    const res: any = await octokit.graphql(query, { owner, repo });
+    return res.repository.discussions.nodes;
+  } catch (error) {
+    console.error('Failed to fetch discussions:', error);
+    return [];
+  }
 }
 
 /**
  * 创建讨论 (发帖)
  */
-export async function createDiscussion(token: string, repositoryId: string, categoryId: string, title: string, body: string) {
+export async function createDiscussion(token: string | null | undefined, repositoryId: string, categoryId: string, title: string, body: string) {
+  if (!token) {
+    throw new Error('未登录或处于游客模式，无法发布讨论');
+  }
   checkConfig();
   const octokit = new Octokit({ auth: token });
   const mutation = `
@@ -159,7 +173,8 @@ export async function createDiscussion(token: string, repositoryId: string, cate
 /**
  * 获取某个具体讨论的详细信息和回复列表
  */
-export async function fetchDiscussionDetails(token: string, discussionNumber: number) {
+export async function fetchDiscussionDetails(token: string | null | undefined, discussionNumber: number) {
+  if (!token) return null;
   checkConfig();
   const octokit = new Octokit({ auth: token });
   const query = `
@@ -189,14 +204,22 @@ export async function fetchDiscussionDetails(token: string, discussionNumber: nu
       }
     }
   `;
-  const res: any = await octokit.graphql(query, { owner, repo, number: discussionNumber });
-  return res.repository.discussion;
+  try {
+    const res: any = await octokit.graphql(query, { owner, repo, number: discussionNumber });
+    return res.repository.discussion;
+  } catch (error) {
+    console.error('Failed to fetch discussion details:', error);
+    return null;
+  }
 }
 
 /**
  * 提交回复 (评论)
  */
-export async function addDiscussionComment(token: string, discussionId: string, body: string) {
+export async function addDiscussionComment(token: string | null | undefined, discussionId: string, body: string) {
+  if (!token) {
+    throw new Error('未登录或处于游客模式，无法提交评论');
+  }
   checkConfig();
   const octokit = new Octokit({ auth: token });
   const mutation = `
@@ -216,12 +239,15 @@ export async function addDiscussionComment(token: string, discussionId: string, 
  * 保存/更新文件内容 (包含轻量级乐观锁：如果 sha 不匹配将被 GitHub 拒绝)
  */
 export async function saveFileContent(
-  token: string,
+  token: string | null | undefined,
   path: string,
   content: string,
   sha?: string, // 如果是新建文件则不需要 sha，如果是更新文件则必传
   message: string = 'Update via SPO Co-Creation Platform'
 ) {
+  if (!token) {
+    throw new Error('游客模式无写权限，请先登录 GitHub');
+  }
   checkConfig();
   const octokit = new Octokit({ auth: token });
 
@@ -253,11 +279,14 @@ export async function saveFileContent(
  * 删除文件
  */
 export async function deleteFileContent(
-  token: string,
+  token: string | null | undefined,
   path: string,
   sha: string,
   message: string = 'Delete via SPO Co-Creation Platform'
 ) {
+  if (!token) {
+    throw new Error('游客模式无删除权限，请先登录 GitHub');
+  }
   checkConfig();
   const octokit = new Octokit({ auth: token });
 

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 
 export default function DiscussionsPage() {
-  const { token } = useAuthStore();
+  const { token, isGuest } = useAuthStore();
   const [discussions, setDiscussions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -28,7 +28,10 @@ export default function DiscussionsPage() {
   };
 
   const loadData = async () => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [list, repo] = await Promise.all([
@@ -86,13 +89,22 @@ export default function DiscussionsPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">协作中心</h1>
         {!isCreating && (
-          <button 
-            onClick={() => setIsCreating(true)}
-            className="bg-accent text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm shadow-accent/20 flex items-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            发起新讨论
-          </button>
+          isGuest ? (
+            <Link
+              href="/"
+              className="px-4 py-2 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/60 rounded-xl text-xs font-medium hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+            >
+              登录参与讨论 &rarr;
+            </Link>
+          ) : (
+            <button 
+              onClick={() => setIsCreating(true)}
+              className="bg-accent text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm shadow-accent/20 flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              发起新讨论
+            </button>
+          )
         )}
       </div>
 
@@ -228,9 +240,17 @@ export default function DiscussionsPage() {
       ) : (
         <div className="space-y-4">
           {discussions.length === 0 ? (
-            <div className="text-center py-20 bg-gray-50 dark:bg-gray-900 rounded-xl border border-dashed border-gray-300">
-              <p className="text-gray-500 mb-4">暂时还没有任何讨论</p>
-              <button onClick={() => setIsCreating(true)} className="text-blue-500 hover:underline">成为第一个发言的人</button>
+            <div className="text-center py-20 bg-gray-50 dark:bg-gray-900 rounded-xl border border-dashed border-gray-300 dark:border-gray-800">
+              <p className="text-gray-500 mb-4">
+                {isGuest ? '当前处于游客浏览模式，尚未拉取社区讨论' : '暂时还没有任何讨论'}
+              </p>
+              {isGuest ? (
+                <Link href="/" className="text-accent hover:underline text-sm font-medium">
+                  登录 GitHub 即可同步社区讨论并参与交流 &rarr;
+                </Link>
+              ) : (
+                <button onClick={() => setIsCreating(true)} className="text-blue-500 hover:underline">成为第一个发言的人</button>
+              )}
             </div>
           ) : (
             discussions.map((d) => (

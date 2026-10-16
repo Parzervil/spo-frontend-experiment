@@ -8,7 +8,7 @@ import matter from 'gray-matter';
 import { toast } from 'sonner';
 
 function EditContent() {
-  const { token, user } = useAuthStore();
+  const { token, user, isGuest } = useAuthStore();
   const searchParams = useSearchParams();
   const router = useRouter();
   const path = searchParams.get('path');
@@ -29,6 +29,7 @@ function EditContent() {
 
   // 简单的基于文件夹的权限控制
   const canEdit = useMemo(() => {
+    if (isGuest || !token) return false;
     if (!currentPath || !user) return false;
     
     // 提取真正的归属文件夹名称
@@ -67,10 +68,10 @@ function EditContent() {
     
     // 其他情况视为“他人的私人文件夹”
     return false;
-  }, [currentPath, user]);
+  }, [currentPath, user, isGuest, token]);
 
   useEffect(() => {
-    if (!token || !path) return;
+    if ((!token && !isGuest) || !path) return;
     
     const loadContent = async () => {
       try {
@@ -234,13 +235,21 @@ function EditContent() {
             </span>
           )}
           {!canEdit && (
-            <span className="ml-3 px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
-              只读模式 (他人的文件夹)
+            <span className="ml-3 px-2.5 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60 text-xs rounded-full font-medium">
+              {isGuest ? '只读预览模式 (游客)' : '只读模式 (无修改权限)'}
             </span>
           )}
         </div>
-        <div className="flex gap-4">
-          <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-black dark:hover:text-white">返回</button>
+        <div className="flex items-center gap-4">
+          {isGuest && (
+            <button
+              onClick={() => router.push('/')}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              登录参与编辑 &rarr;
+            </button>
+          )}
+          <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-black dark:hover:text-white cursor-pointer">返回</button>
           
           <button 
             onClick={() => setShowMetadata(!showMetadata)} 

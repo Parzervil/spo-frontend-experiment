@@ -8,8 +8,10 @@ interface AuthState {
     avatar_url: string;
     name: string | null;
   } | null;
+  isGuest: boolean;
   setToken: (token: string) => void;
   setUser: (user: any) => void;
+  loginAsGuest: () => void;
   logout: () => void;
 }
 
@@ -18,9 +20,20 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       user: null,
-      setToken: (token) => set({ token }),
+      isGuest: false,
+      setToken: (token) => set({ token, isGuest: false }),
       setUser: (user) => set({ user }),
-      logout: () => set({ token: null, user: null }),
+      loginAsGuest: () =>
+        set({
+          token: null,
+          isGuest: true,
+          user: {
+            login: 'guest',
+            avatar_url: '',
+            name: '访客体验官',
+          },
+        }),
+      logout: () => set({ token: null, user: null, isGuest: false }),
     }),
     {
       name: 'auth-storage', // 将 token 保存在 localStorage 中
