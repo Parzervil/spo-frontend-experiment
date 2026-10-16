@@ -1,15 +1,15 @@
 import { Octokit } from 'octokit';
 
-// 获取配置好的目标仓库信息
-const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || '';
-const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || '';
+// 获取配置好的目标仓库信息，默认回退至主仓库
+const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'Parzervil';
+const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'SPO-Co-Platform';
 
 /**
  * 确保提供了仓库配置
  */
 function checkConfig() {
-  if (!owner || !repo || owner === 'YOUR_GITHUB_USERNAME' || repo === 'YOUR_GITHUB_REPO_NAME') {
-    throw new Error('请在 .env.local 中配置 NEXT_PUBLIC_GITHUB_OWNER 和 NEXT_PUBLIC_GITHUB_REPO');
+  if (!owner || !repo) {
+    throw new Error('未配置目标 GitHub 仓库所有者或仓库名');
   }
 }
 
